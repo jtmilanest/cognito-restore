@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 
-	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/s3"
 	log "github.com/sirupsen/logrus"
+	awsLambda 
 )
 
 type Event struct {
@@ -29,6 +30,42 @@ type AttributeType struct {
 
 	// The value of the attribute.
 	Value *string
+}
+
+func init() {
+	log.SetReportCaller(false)
+
+	var formatter log.Formatter
+
+	if formatterType, ok := os.LookupEnv("FORMATTER_TYPE"); ok {
+		if formatterType == "JSON" {
+			formatter = &log.JSONFormatter{PrettyPrint: false}
+		}
+
+		if formatterType == "TEXT" {
+			formatter = &log.TextFormatter{DisableColors: false}
+		}
+	}
+
+	if formatter == nil {
+		formatter = &log.TextFormatter{DisableColors: false}
+	}
+
+	log.SetFormatter(formatter)
+
+	var logLevel log.Level
+	var err error
+
+	if ll, ok := os.LookupEnv("LOG_LEVEL"); ok {
+		logLevel, err = log.ParseLevel(ll)
+		if err != nil {
+			logLevel = log.DebugLevel
+		}
+	} else {
+		logLevel = log.DebugLevel
+	}
+
+	log.SetLevel(logLevel)
 }
 
 func RestoreCognitoUserPool(ctx context.Context, event Event) (string, error) {
@@ -107,5 +144,8 @@ func RestoreCognitoUserPool(ctx context.Context, event Event) (string, error) {
 
 func main() {
 	// Execute Lambda function
-	lambda.Start(RestoreCognitoUserPool)
+	// lambda.Start(RestoreCognitoUserPool)
+
+	log.Info("Starting lambda restore execution ...")
+
 }
