@@ -196,12 +196,12 @@ Payload to execute Cognito Restore
 {
   "awsRegion": "us-west-2",
   "cognitoUserPoolId": "us-west-2_Xy67PstDj",
-	"cognitoRegion": "us-west-2",
+  "cognitoRegion": "us-west-2",
   "s3BucketName": "test-cognito-backup001",
-	"s3BucketRegion": "us-west-2",
+  "s3BucketRegion": "us-west-2",
   "backupDirPath": "platform",
   "restoreUsers": true,
-  "restoreGroups": true, //TODO
+  "restoreGroups": false, //todo
   "cleanUpBeforeRestore": true
 }
 
