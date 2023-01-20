@@ -7,12 +7,15 @@ import (
 	"io"
 	"os"
 
+	awsLambda "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/s3"
+	cfg "github.com/jtmilanest/cognito-restore/internal/config"
+	"github.com/jtmilanest/cognito-restore/internal/lambda"
+	"github.com/jtmilanest/cognito-restore/internal/types"
 	log "github.com/sirupsen/logrus"
-	awsLambda 
 )
 
 type Event struct {
@@ -68,7 +71,8 @@ func init() {
 	log.SetLevel(logLevel)
 }
 
-func RestoreCognitoUserPool(ctx context.Context, event Event) (string, error) {
+// Not in use
+func Handler(ctx context.Context, event Event) (string, error) {
 
 	event.S3Bucket = "test-cognito-backup001"
 	event.S3BucketFileName = "us-west-2_test"
@@ -142,10 +146,63 @@ func RestoreCognitoUserPool(ctx context.Context, event Event) (string, error) {
 	return "successful", nil
 }
 
+// Function handler to execute lambda code to AWS
+func RestoreCognitoUserPool(ctx context.Context, event types.Event) (types.Response, error) {
+	log.Infof("Handling lambda for event: %v", event)
+	// Instantiate new config param
+	config, err := cfg.NewConfigParam(event)
+	if err != nil {
+		return types.Response{Message: "Lambda has been failed"}, err
+	}
+
+	// Execute Lambda with instantiated new config param
+	var msg string
+	err = lambda.Execute(ctx, *config)
+	if err != nil {
+		msg = "Lambda has been failed."
+	} else {
+		msg = "Lambda has been completed successfuly!"
+	}
+
+	return types.Response{Message: msg}, err
+}
+
 func main() {
-	// Execute Lambda function
 	// lambda.Start(RestoreCognitoUserPool)
 
-	log.Info("Starting lambda restore execution ...")
+	// config, err := cfg.NewConfigParam(nil)
+	// if err != nil {
+	// 	log.Errorf("Lambda execution failed. Error: %s", err)
+	// 	os.Exit(1)
+	// }
 
+	// err = lambda.Execute(context.TODO(), *config)
+	// if err != nil {
+	// 	log.Errorf("Lambda has been failed. Error: %s", err)
+	// 	os.Exit(1)
+	// } else {
+	// 	log.Info("Lambda cognito-restore has been completed successfully!")
+	// }
+
+	// Execute Lambda function
+	log.Info("Starting lambda restore execution ...")
+	awsLambda.Start(RestoreCognitoUserPool)
 }
+
+/*
+
+Payload to execute Cognito Restore
+
+{
+  "awsRegion": "us-west-2",
+  "cognitoUserPoolId": "us-west-2_Xy67PstDj",
+	"cognitoRegion": "us-west-2",
+  "s3BucketName": "test-cognito-backup001",
+	"s3BucketRegion": "us-west-2",
+  "backupDirPath": "platform",
+  "restoreUsers": true,
+  "restoreGroups": true, //TODO
+  "cleanUpBeforeRestore": true
+}
+
+*/

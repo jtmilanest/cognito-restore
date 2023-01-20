@@ -243,6 +243,9 @@ func NewConfigParam(eventRaw interface{}) (*ConfigParam, error) {
 	// pass the value to config
 	if getFromEvent {
 		if event.CleanUpBeforeRestore.Valid {
+			config.CleanUpBeforeRestore = event.CleanUpBeforeRestore
+		}
+		if !config.CleanUpBeforeRestore.Valid {
 			log.Warn("cleanupBeforeRestore is not specified; Default value 'false' will be used")
 			config.CleanUpBeforeRestore = null.NewBool(false, true)
 		} else {
@@ -251,6 +254,7 @@ func NewConfigParam(eventRaw interface{}) (*ConfigParam, error) {
 			}
 		}
 	}
+
 	// Process cleanUpBeforeRestore
 
 	// Return config, no errors
