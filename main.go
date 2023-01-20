@@ -11,23 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Event struct {
-	S3Bucket         string `json:"bucket"`
-	S3BucketFileName string `json:"key"`
-}
-
-// Specifies whether the attribute is standard or custom.
-type AttributeType struct {
-
-	// The name of the attribute.
-	//
-	// This member is required.
-	Name *string
-
-	// The value of the attribute.
-	Value *string
-}
-
 func init() {
 	log.SetReportCaller(false)
 
