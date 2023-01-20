@@ -48,6 +48,7 @@ func getLookEnv(key, fallback string) string {
 	return fallback
 }
 
+// Instantiate New Config Parameters
 func NewConfigParam(eventRaw interface{}) (*ConfigParam, error) {
 	var config = &ConfigParam{}
 

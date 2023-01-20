@@ -2,7 +2,7 @@ package types
 
 import "github.com/guregu/null"
 
-// Response struc
+// Response struct
 type Response struct {
 	Message string `json:"answer"`
 }
