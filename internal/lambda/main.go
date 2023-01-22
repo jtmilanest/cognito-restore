@@ -7,14 +7,25 @@ import (
 	"io"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/jtmilanest/cognito-restore/internal/cloud"
 	"github.com/jtmilanest/cognito-restore/internal/config"
 	log "github.com/sirupsen/logrus"
 )
+
+// Decrypt S3 Data via KMS
+func decryptViaKMS(ctx context.Context, client *cloud.Client, kmsKeyName string, data []byte) (*kms.DecryptOutput, error) {
+	result, err := client.KMSClient.Decrypt(ctx, &kms.DecryptInput{
+		KeyId:          aws.String(kmsKeyName),
+		CiphertextBlob: data,
+	})
+
+	return result, err
+}
 
 // Retreive Data to restore from S3
 func getDataFromS3(ctx context.Context, client *cloud.Client, bucketName, keyName string) ([]byte, error) {
@@ -44,7 +55,7 @@ func getDataFromS3(ctx context.Context, client *cloud.Client, bucketName, keyNam
 // Execute Lambda Function
 func Execute(ctx context.Context, config config.ConfigParam) error {
 
-	client, err := cloud.New(ctx, config.CognitoRegion, config.S3BucketRegion)
+	client, err := cloud.New(ctx, config.CognitoRegion, config.S3BucketRegion, config.KMSRegion)
 	if err != nil {
 		return fmt.Errorf("Could not create AWS client. Error %w", err)
 	}
@@ -77,6 +88,8 @@ func Execute(ctx context.Context, config config.ConfigParam) error {
 	}
 
 	if config.RestoreUsers.Bool {
+
+		// Get the data object in S3
 		data, err := getDataFromS3(ctx, client, config.S3BucketName, fmt.Sprintf("%s/users.json", config.BackupDirPath))
 		if err != nil {
 			return fmt.Errorf("Failed to get users backup data from S3. Error: %w", err)
@@ -84,8 +97,18 @@ func Execute(ctx context.Context, config config.ConfigParam) error {
 			log.Debugf("%s/users.json data has been received successfully from S3", config.BackupDirPath)
 		}
 
+		encData, err := decryptViaKMS(ctx, client, config.KMSKeyName, data)
+		if err != nil {
+			return fmt.Errorf("Failed to decrypt users backup data. Error: %w", err)
+		} else {
+			log.Debugf("data is not able to decrypt by KMS key", config.KMSKeyName)
+		}
+
+		// Get the decrypted data
+		decryptedData := encData.Plaintext
+
 		var users cognitoidentityprovider.ListUsersOutput
-		err = json.Unmarshal(data, &users)
+		err = json.Unmarshal(decryptedData, &users)
 		if err != nil {
 			return fmt.Errorf("Failed to unmarshal users backup data. Error: %w", err)
 		} else {

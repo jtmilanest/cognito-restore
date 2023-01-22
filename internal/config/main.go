@@ -33,6 +33,9 @@ type ConfigParam struct {
 	S3BucketName   string
 	S3BucketRegion string
 
+	KMSKeyName string
+	KMSRegion  string
+
 	BackupDirPath string
 
 	RestoreUsers         null.Bool
@@ -255,8 +258,47 @@ func NewConfigParam(eventRaw interface{}) (*ConfigParam, error) {
 			}
 		}
 	}
-
 	// Process cleanUpBeforeRestore
+
+	// Process KMSKeyName
+	if kmsKeyName := getLookEnv("KMS_KEY_NAME", ""); kmsKeyName != "" {
+		config.KMSKeyName = kmsKeyName
+	} else {
+		log.Warn("Environment variable for 'KMS_KEY_NAME' is empty")
+	}
+
+	// pass the value to config from Event/parameter in lambda from Event/parameter in lambda
+	if getFromEvent {
+		if event.KMSKeyName != "" {
+			config.KMSKeyName = event.KMSKeyName
+		} else {
+			log.Warn("Event contains empty kmsKeyName variable")
+		}
+	}
+	if config.KMSKeyName == "" {
+		return nil, fmt.Errorf("kmsKeyName is empty;Configure it via 'KMS_KEY_NAME' env variable OR pass in event body")
+	}
+	// Process KMSKeyName
+
+	// Process KMSRegion
+	if kmsRegion := getLookEnv("KMS_REGION", ""); kmsRegion != "" {
+		config.KMSRegion = kmsRegion
+	} else {
+		log.Warn("Environment variable for KMS_REGION is empty")
+	}
+
+	// pass the value to config from Event/parameter in lambda from Event/parameter in lambda
+	if getFromEvent {
+		if event.KMSRegion != "" {
+			config.KMSRegion = event.KMSRegion
+		} else {
+			log.Warn("Event contains empty kmsRegion variable")
+		}
+	}
+	if config.KMSRegion == "" {
+		return nil, fmt.Errorf("kmsRegion is empty;Configure it via 'KMS_REGION' env variable OR pass in event body")
+	}
+	// Process KMSRegion
 
 	// Return config, no errors
 	return config, nil

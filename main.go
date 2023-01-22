@@ -85,9 +85,11 @@ Lambda UI in AWS
   "cognitoRegion": "us-west-2",
   "s3BucketName": "test-cognito-backup001",
   "s3BucketRegion": "us-west-2",
-  "backupDirPath": "platform",
+  "backupDirPath": "platform-enc/<DATETIME>",
   "restoreUsers": true,
   "restoreGroups": false, //todo
   "cleanUpBeforeRestore": true
+	"kmsKeyName": "03799fec-5fae-49ef-bc11-7703238fd713",
+  "kmsRegion": "us-east-1"
 }
 */

@@ -17,6 +17,9 @@ type Event struct {
 	S3BucketName   string `json:"s3BucketName"`
 	S3BucketRegion string `json:"s3BucketRegion"`
 
+	KMSKeyName string `json:"kmsKeyName"`
+	KMSRegion  string `json:"kmsRegion"`
+
 	BackupDirPath string `json:"backupDirPath"`
 
 	RestoreUsers         null.Bool `json:"restoreUsers"`
